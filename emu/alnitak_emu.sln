@@ -7,9 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "alnitak_emu", "alnitak_emu.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "usbdctrl", "..\usbdctrl\usbdctrl.vcxproj", "{6317C103-151B-4505-B8B9-CEC9C7FF83DA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "usbd", "usbd\usbd.vcxproj", "{CB1509C1-2430-4F28-9EA9-8BB583205DBC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "usbd", "..\usbd\usbd.vcxproj", "{CB1509C1-2430-4F28-9EA9-8BB583205DBC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aacmd", "aacmd\aacmd.vcxproj", "{CAAE707A-38B1-47ED-8275-AF149FF18376}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aacmd", "..\aacmd\aacmd.vcxproj", "{CAAE707A-38B1-47ED-8275-AF149FF18376}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
