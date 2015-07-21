@@ -30,9 +30,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "alnitak_emu.h"
 #include "serialport.h"
 #include "dbg.h"
-#include "usbdimmer.h"
 #include <string>
 #include <stdio.h>
 
@@ -41,97 +41,7 @@
 # define sscanf sscanf_s
 #endif
 
-struct Panel
-{
-    int prodid;
-    int cover;   // 0 = none, 1=closed, 2=open, 3=timed-out
-    bool light;     //  light on?
-    bool motor;  //  motor on?
-    unsigned char blvl; // brightness level 0..255
-
-    USBDimmer m_dimmer;
-
-    static unsigned char alnitak_val(unsigned int inten)
-    {
-        return (unsigned char)(inten / 4);
-    }
-
-    static unsigned int usbd_val(unsigned int blvl)
-    {
-        return blvl == 255 ? 1023 : blvl * 4;
-    }
-
-    Panel() :
-        prodid(10),
-        cover(0),
-        light(false),
-        motor(false),
-        blvl(255)
-        { }
-
-    ~Panel()
-    {
-        m_dimmer.Disconnect();
-    }
-
-    bool Connect()
-    {
-        int ret = m_dimmer.Connect();
-        if (ret == USBDimmer::USBD_SUCCESS)
-        {
-            light = m_dimmer.IsLightOn() == 1;
-            blvl = alnitak_val(m_dimmer.GetBrightness());
-            return true;
-        }
-        return false;
-    }
-
-    void Disconnect()
-    {
-        m_dimmer.Disconnect();
-    }
-
-    std::string response(int cmd, const char *data = "000") const
-    {
-        char buf[] = {
-            '*', (char) cmd,
-            '0' + (char) prodid / 10, '0' + (char) (prodid % 10),
-            data[0], data[1], data[2], '\n', 0 };
-        return buf;
-    }
-
-    std::string state() const
-    {
-        char buf[] = {
-            motor ? '1' : '0',
-            light ? '1' : '0',
-            '0' + cover
-        };
-        return response('S', buf);
-    }
-
-    std::string brightness() const
-    {
-        char buf[3];
-        snprintf(buf, sizeof(buf), "%03u", (unsigned int) blvl);
-        return response('B', buf);
-    }
-
-    void lightOn(bool on)
-    {
-        if (m_dimmer.LightOn(on) == USBDimmer::USBD_SUCCESS)
-            light = on;
-    }
-
-    void brightness(unsigned char val)
-    {
-        unsigned int dval = usbd_val(val);
-        if (m_dimmer.SetBrightness(dval) == USBDimmer::USBD_SUCCESS)
-            blvl = val;
-    }
-};
-
-static Panel panel;
+static AlnitakEmu panel;
 
 static void respond(SerialPort& dev, const std::string& resp)
 {
@@ -181,7 +91,7 @@ main(int argc, char *argv[])
         Sleep(10000);
     }
 
-    MSG("panel light %s brightness %u\n", panel.light ? "ON" : "OFF", panel.blvl);
+    MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
 
     while (1) {
 
@@ -209,23 +119,23 @@ main(int argc, char *argv[])
         switch (buf[1]) {
         case 'S': {
             MSG("REQ: get state\n");
-            respond(dev, panel.state());
+            respond(dev, panel.stateStr());
             break;
         }
 
         case 'L': {
             MSG("REQ: light on\n");
-            panel.lightOn(true);
-            MSG("panel light %s brightness %u\n", panel.light ? "ON" : "OFF", panel.blvl);
-            respond(dev, panel.response('L'));
+            panel.setLightOn(true);
+            MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
+            respond(dev, panel.responseStr('L'));
             break;
         }
 
         case 'D': {
             MSG("REQ: light off\n");
-            panel.lightOn(false);
-            MSG("panel light %s brightness %u\n", panel.light ? "ON" : "OFF", panel.blvl);
-            respond(dev, panel.response('D'));
+            panel.setLightOn(false);
+            MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
+            respond(dev, panel.responseStr('D'));
             break;
         }
 
@@ -233,9 +143,9 @@ main(int argc, char *argv[])
             unsigned int b;
             if (sscanf(&buf[2], "%u", &b) == 1) {
                 MSG("REQ: set brightness %u\n", b);
-                panel.brightness(b);
-                MSG("panel light %s brightness %u\n", panel.light ? "ON" : "OFF", panel.blvl);
-                respond(dev, panel.response('B', &buf[2]));
+                panel.setBrightness(b);
+                MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
+                respond(dev, panel.responseStr('B', &buf[2]));
             }
             break;
         }
@@ -243,14 +153,14 @@ main(int argc, char *argv[])
         case 'J': {
             MSG("REQ: get brightness\n");
             char bbuf[3];
-            snprintf(bbuf, sizeof(bbuf), "%03u", panel.blvl);
-            respond(dev, panel.response('J', bbuf));
+            snprintf(bbuf, sizeof(bbuf), "%03u", panel.getBrightness());
+            respond(dev, panel.responseStr('J', bbuf));
             break;
         }
 
         case 'V': {
             MSG("REQ: get version\n");
-            respond(dev, panel.response('V', "999"));
+            respond(dev, panel.responseStr('V', "999"));
             break;
         }
 

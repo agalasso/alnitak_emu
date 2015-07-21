@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -84,11 +84,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\emu\alnitak_emu.cpp" />
     <ClCompile Include="..\emu\dbg.cpp" />
     <ClCompile Include="..\emu\usbdimmer.cpp" />
     <ClCompile Include="aacmd.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\emu\alnitak_emu.h" />
     <ClInclude Include="..\emu\dbg.h" />
     <ClInclude Include="..\emu\usbdimmer.h" />
   </ItemGroup>

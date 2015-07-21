@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "usbdimmer.h"
+#include "alnitak_emu.h"
 #include "dbg.h"
 
 static void usage()
@@ -47,11 +47,6 @@ static void usage()
         "aacmd.exe <COM port number> O S           - opens the FlipFlat\n"
         "aacmd.exe <COM port number> C S           - closes the FlipFlat\n");
     exit(1);
-}
-
-static unsigned int usbd_val(unsigned int blvl)
-{
-    return blvl == 255 ? 1023 : blvl * 4;
 }
 
 /*
@@ -138,10 +133,9 @@ int main(int argc, char *argv[])
         usage();
     }
 
-    USBDimmer dimmer;
+    AlnitakEmu dimmer;
 
-    int ret = dimmer.Connect();
-    if (ret != USBDimmer::USBD_SUCCESS)
+    if (!dimmer.Connect())
     {
         fprintf(stderr, "could not connect to usb dimmer!\n");
         return 1;
@@ -149,12 +143,12 @@ int main(int argc, char *argv[])
 
     if (inten == 0)
     {
-        dimmer.LightOn(false);
+        dimmer.setLightOn(false);
     }
     else
     {
-        dimmer.SetBrightness(usbd_val(inten));
-        dimmer.LightOn(true);
+        dimmer.setBrightness(inten);
+        dimmer.setLightOn(true);
     }
 
     return 0;
