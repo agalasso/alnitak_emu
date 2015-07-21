@@ -31,21 +31,58 @@
 */
 
 #include "alnitak_emu.h"
+#include <algorithm>
 
 #ifdef _MSC_VER
 # define snprintf _snprintf_s
 # define sscanf sscanf_s
 #endif
 
-static unsigned char alnitak_val(unsigned int inten)
+struct IntenMap
 {
-    return (unsigned char)(inten / 4);
-}
+    unsigned int map[255];
 
-static unsigned int usbd_val(unsigned int blvl)
-{
-    return blvl == 255 ? 1023 : blvl * 4;
-}
+    static unsigned int _usbd_val(unsigned int blvl)
+    {
+        double const x = (double)blvl;
+        // map alnitak brightness level 0..255 to usbd val 0..1023
+        // use a polynomial function to to give finer control over the lower intensity levels
+        static const double K4 = 256. / 1409416875.;
+        unsigned int y = (unsigned int)(x * (1.0 + K4 * x * x * x));
+        return std::min(y, 1023U);
+    }
+
+    IntenMap()
+    {
+        for (unsigned int i = 0; i <= 255; i++)
+            map[i] = _usbd_val(i);
+    }
+
+    unsigned int usbd_val(unsigned int blvl)
+    {
+        return map[std::min(blvl, 255U)];
+    }
+
+    unsigned char alnitak_val(unsigned int inten)
+    {
+        // inverse function of usbd_val()
+        int a = 0;
+        int b = 255;
+        while (a < b)
+        {
+            int mid = (a + b) / 2;
+            if (map[mid] == inten)
+                return mid;
+            else if (map[mid] < inten)
+                a = mid + 1;
+            else
+                b = mid - 1;
+        }
+        return a;
+    }
+};
+
+static IntenMap s_map;
 
 bool AlnitakEmu::Connect()
 {
@@ -53,7 +90,7 @@ bool AlnitakEmu::Connect()
     if (ret == USBDimmer::USBD_SUCCESS)
     {
         light = m_dimmer.IsLightOn() == 1;
-        blvl = alnitak_val(m_dimmer.GetBrightness());
+        blvl = s_map.alnitak_val(m_dimmer.GetBrightness());
         return true;
     }
     return false;
@@ -93,7 +130,7 @@ void AlnitakEmu::setLightOn(bool on)
 
 void AlnitakEmu::setBrightness(unsigned char val)
 {
-    unsigned int dval = usbd_val(val);
+    unsigned int dval = s_map.usbd_val(val);
     if (m_dimmer.SetBrightness(dval) == USBDimmer::USBD_SUCCESS)
         blvl = val;
 }
