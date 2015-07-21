@@ -1,0 +1,10 @@
+aacmd/Debug
+aacmd/Release
+emu/Debug
+emu/Release
+emu/alnitak_emu.sdf
+emu/alnitak_emu.v12.suo
+usbd/Debug
+usbd/Release
+usbdctrl/Debug
+usbdctrl/Release
