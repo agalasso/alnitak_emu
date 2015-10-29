@@ -42,6 +42,9 @@
 #endif
 
 static AlnitakEmu panel;
+static time64_t disconnect_time;
+
+static unsigned int idle_timeout = 15 * 1000;  // disconnect after 15 seconds
 
 static void respond(SerialPort& dev, const std::string& resp)
 {
@@ -51,6 +54,36 @@ static void respond(SerialPort& dev, const std::string& resp)
     if (!ok) {
         WARN("respond: write failed\n");
     }
+}
+
+inline static void update_disconnect_time()
+{
+    disconnect_time = time64() + idle_timeout;
+}
+
+static bool ConnectPanel()
+{
+    if (panel.IsConnected())
+        return true;
+
+    MSG("Connecting to panel\n");
+
+    if (!panel.Connect())
+    {
+        ERR("could not connect to panel\n");
+        return false;
+    }
+
+    MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
+
+    update_disconnect_time();
+    return true;
+}
+
+static void DisconnectPanel()
+{
+    MSG("disconnect panel\n");
+    panel.Disconnect();
 }
 
 // ===========================
@@ -82,18 +115,9 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    while (true)
-    {
-        MSG("Connecting to panel\n");
-        if (panel.Connect())
-            break;
-        ERR("could not connect to panel, waiting...\n");
-        Sleep(10000);
-    }
+    bool quit = false;
 
-    MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
-
-    while (1) {
+    while (!quit) {
 
         char buf[1024];
         size_t rem = sizeof(buf) - 1;
@@ -101,10 +125,15 @@ main(int argc, char *argv[])
         while (rem > 0) {
             ssize_t const nread = dev.Read(p, 1);
             if (nread == 0) {
-//                printf("%s\n", "read timed-out");
+                // read timed-out (3s)
+                if (panel.IsConnected() && time64() > disconnect_time) {
+                    MSG("idle timeout\n");
+                    DisconnectPanel();
+                }
+                continue;
             }
             if (nread < 0) {
-                WARN("COM port read error\n");
+                ERR("COM port read error!\n");
                 return 1;
             }
             if (*p == '\n') {
@@ -119,23 +148,45 @@ main(int argc, char *argv[])
         switch (buf[1]) {
         case 'S': {
             MSG("REQ: get state\n");
-            respond(dev, panel.stateStr());
+            if (ConnectPanel()) {
+                std::string state = panel.stateStr();
+                update_disconnect_time();
+                respond(dev, state);
+            }
             break;
         }
 
         case 'L': {
             MSG("REQ: light on\n");
-            panel.setLightOn(true);
-            MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
-            respond(dev, panel.responseStr('L'));
+            if (ConnectPanel()) {
+                if (panel.setLightOn(true)) {
+                    MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
+                    update_disconnect_time();
+                    respond(dev, panel.responseStr('L'));
+                }
+                else {
+                    MSG("set light on failed, disconnect\n");
+                    DisconnectPanel();
+                    // no response
+                }
+            }
             break;
         }
 
         case 'D': {
             MSG("REQ: light off\n");
-            panel.setLightOn(false);
-            MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
-            respond(dev, panel.responseStr('D'));
+            if (ConnectPanel()) {
+                if (panel.setLightOn(false)) {
+                    MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
+                    update_disconnect_time();
+                    respond(dev, panel.responseStr('D'));
+                }
+                else {
+                    MSG("set light on failed, disconnect\n");
+                    DisconnectPanel();
+                    // no response
+                }
+            }
             break;
         }
 
@@ -143,24 +194,45 @@ main(int argc, char *argv[])
             unsigned int b;
             if (sscanf(&buf[2], "%u", &b) == 1) {
                 MSG("REQ: set brightness %u\n", b);
-                panel.setBrightness(b);
-                MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
-                respond(dev, panel.responseStr('B', &buf[2]));
+                if (ConnectPanel()) {
+                    if (panel.setBrightness(b)) {
+                        MSG("panel light %s brightness %u\n", panel.getLightOn() ? "ON" : "OFF", panel.getBrightness());
+                        update_disconnect_time();
+                        respond(dev, panel.responseStr('B', &buf[2]));
+                    }
+                    else {
+                        MSG("set brightness failed, disconnect\n");
+                        DisconnectPanel();
+                        // no response
+                    }
+                }
             }
             break;
         }
 
         case 'J': {
             MSG("REQ: get brightness\n");
-            char bbuf[3];
-            snprintf(bbuf, sizeof(bbuf), "%03u", panel.getBrightness());
-            respond(dev, panel.responseStr('J', bbuf));
+            if (ConnectPanel()) {
+                char bbuf[3];
+                snprintf(bbuf, sizeof(bbuf), "%03u", panel.getBrightness());
+                update_disconnect_time();
+                respond(dev, panel.responseStr('J', bbuf));
+            }
             break;
         }
 
         case 'V': {
             MSG("REQ: get version\n");
-            respond(dev, panel.responseStr('V', "999"));
+            if (ConnectPanel()) {
+                update_disconnect_time();
+                respond(dev, panel.responseStr('V', "999"));
+            }
+            break;
+        }
+
+        case 'u': { // not part of alnitak proto
+            if (strcmp(buf, "quit") == 0)
+                quit = true;
             break;
         }
 

@@ -122,15 +122,23 @@ std::string AlnitakEmu::brightnessStr() const
     return responseStr('B', buf);
 }
 
-void AlnitakEmu::setLightOn(bool on)
+bool AlnitakEmu::setLightOn(bool on)
 {
     if (m_dimmer.LightOn(on) == USBDimmer::USBD_SUCCESS)
+    {
         light = on;
+        return true;
+    }
+    return false;
 }
 
-void AlnitakEmu::setBrightness(unsigned char val)
+bool AlnitakEmu::setBrightness(unsigned char val)
 {
     unsigned int dval = s_map.usbd_val(val);
     if (m_dimmer.SetBrightness(dval) == USBDimmer::USBD_SUCCESS)
+    {
         blvl = val;
+        return true;
+    }
+    return false;
 }

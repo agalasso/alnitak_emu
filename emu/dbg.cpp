@@ -35,10 +35,8 @@
 #include <time.h>
 
 namespace dbg {
-  bool verbose;
+    bool verbose;
 }
-
-#ifdef DBG_ENABLED
 
 #ifdef _MSC_VER
 
@@ -83,6 +81,15 @@ gettimeofday(struct timeval *tv, struct timezone2 *tz)
 # include <sys/time.h>
 #endif // _MSC_VER
 
+time64_t time64()
+{
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    return (time64_t) tv.tv_sec * 1000ULL + tv.tv_usec / 1000;
+}
+
+#ifdef DBG_ENABLED
+
 #ifdef _MSC_VER
 # define snprintf _snprintf_s
 # define sscanf sscanf_s
@@ -103,9 +110,10 @@ timestamp()
     localtime_r(&t, &tm);
 
     static char buf[128];
-    snprintf(buf, sizeof(buf), "[%02u:%02u:%02u.%03u] ",
+    snprintf(buf, sizeof(buf), "[%04u-%02u-%02u %02u:%02u:%02u.%03u] ",
+        tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
         tm.tm_hour, tm.tm_min, tm.tm_sec,
-        (tv.tv_usec + 500) / 1000);
+        tv.tv_usec / 1000);
 
     return buf;
 }

@@ -55,6 +55,7 @@ public:
 
     int Connect();
     void Disconnect();
+    bool IsConnected() const;
 
     int SetBrightness(unsigned int val);
     int GetBrightness() const;
@@ -62,5 +63,10 @@ public:
     int IsLightOn() const;
     int LightOn(bool on);
 };
+
+inline bool USBDimmer::IsConnected() const
+{
+    return m_handle != 0;
+}
 
 #endif

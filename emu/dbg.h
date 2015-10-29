@@ -54,4 +54,7 @@ extern void dbgpr(const char *format, ...);
 # define VERBOSE(format, ...)  do { } while (0)
 #endif
 
+typedef __int64 time64_t;
+extern time64_t time64();  // time in milliseconds since unix epoch
+
 #endif

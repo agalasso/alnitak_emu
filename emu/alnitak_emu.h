@@ -54,14 +54,15 @@ public:
 
     bool Connect();
     void Disconnect();
+    bool IsConnected() const;
 
     std::string stateStr() const;
     std::string brightnessStr() const;
     std::string responseStr(int cmd, const char *data = "000") const;
 
-    void setLightOn(bool on);
+    bool setLightOn(bool on);
     bool getLightOn() const;
-    void setBrightness(unsigned char val);
+    bool setBrightness(unsigned char val);
     unsigned int getBrightness() const;
 };
 
@@ -91,6 +92,11 @@ inline unsigned int AlnitakEmu::getBrightness() const
 inline void AlnitakEmu::Disconnect()
 {
     m_dimmer.Disconnect();
+}
+
+inline bool AlnitakEmu::IsConnected() const
+{
+    return m_dimmer.IsConnected();
 }
 
 #endif
