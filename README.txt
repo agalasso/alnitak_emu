@@ -1,10 +1,10 @@
 Alnitak Flat-Man emulation for Spike-a Flat Panel USB Dimmer
 ------------------------------------------------------------
 
-This application provides Alnitak emulation capability for Spike-a
-flat panels. If your imaging application is designed to communicate
-with Alnitak flat panels, you can use this emulator to control your
-Spike-a flat panel using the Spike-a USB dimmer.
+This package provides Alnitak emulation for Spike-a flat panels. If
+your imaging application is designed to communicate with Alnitak flat
+panels, you can use this emulator to control your Spike-a flat panel
+using the Spike-a USB dimmer.
 
 
 Installation
