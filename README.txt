@@ -1,16 +1,58 @@
 Alnitak Flat-Man emulation for Spike-a Flat Panel USB Dimmer
 ------------------------------------------------------------
 
-My imaging software of choice (Sequence Generator Pro) has integrated
-support for Alnitak Flat Panels.  I needed a way to control my Spike-a
-Flat Panel from SGP, so I put together this emulation app.
+This application provides Alnitak emulation capability for Spike-a
+flat panels. If your imaging application is designed to communicate
+with Alnitak flat panels, you can use this emulator to control your
+Spike-a flat panel using the Spike-a USB dimmer.
 
-The emulator works by listening for Alnitak commands on a virtual COM
-port, then sending the corresponding translated command to the Spike-a
-USB dimmer.
 
 Installation
 ------------
+
+Imaging applications communicate with Alnitak panels in one of two
+ways: either by using AACmd.exe or by communicating over a serial
+(COM) port. How you setup the emulator depends on which method your
+imaging app uses.  If your imaging app is not listed below, please
+contact me and I'll work with you to add instructions for your imaging
+app.
+
+
+Installation for apps that use AACmd.exe
+----------------------------------------
+
+Follow these steps for ACP.
+
+1. Un-zip the alnitak_emu.zip file to any location you like. Make note
+   of the location as you will need to specify the location in an ACP
+   config file in the next step.  For this example, let's say you put
+   the files in C:\alnitak_emu
+
+2. Update the following lines in the autoflat config file:
+
+LightCtrlProgram      C:\alnitak_emu\AACmd.exe
+LightOnCommand        x L B#BRT# S      ; Command string to turn light on and set/change brightness
+LightOffCommand       x D S             ; Command string to turn light off
+LightOnDelay          5                 ; Time needed (sec) for brightness to stabilize
+
+Be sure to update the LightCtrlProgram path to specify the actual
+location you chose where the emulator files are located.
+
+CCDAP also uses AACmd.exe but I do not have any information on how to
+configure CCDAP, though I believe it should be sufficient to just
+specify the path to the emulator's AACmd.exe.
+
+
+Installation for apps that use the serial port
+----------------------------------------------
+
+Follow these steps for SGP or other apps that have support for
+communicating with an Alnitak flat panel using the Alnitak serial
+command protocol.
+
+For these apps, the emulator works by listening for Alnitak commands
+on a virtual COM port, then sending the corresponding translated
+command to the Spike-a USB dimmer.
 
 1. Un-zip the alnitak_emu.zip file to any location you like.
 
@@ -29,14 +71,20 @@ with the Target:
 
    C:\alnitak_emu\alnitak_emu.exe COM23
 
+You will need ensure the emulator is running before you attempt to
+control the panel in SGP. You can setup a shortcut in the Startup
+folder in the Windows Start Menu so that the emulator is started
+automatically.
+
 4. In your imaging program, connect to your "Alnitak" on the other
 virtual COM port. For example, if your virtual COM ports are COM22 and
 COM23 and alnitak_emu.exe is started with COM23, your imaging program
 would connect to the emulated Alnitak on COM22.
 
-----------
 
-usbdctrl.exe is also included in the zip file.
+----------
+Extras - programs included in the zip file
+----------
 
 usbdctrl.exe - a command-line program for controlling the panel.
 
@@ -53,8 +101,6 @@ Example:
 
 ----------
 
-aacmd.exe is also included in the zip file.
-
 aacmd.exe - a command-line program for controlling the panel, compatible with Alnitak's AAcmd.exe
 
 Usage:
@@ -62,8 +108,8 @@ Usage:
 aacmd.exe <COM port number> L Bnnn S      - turns the panel on to brightness nnn 1-255
 aacmd.exe <COM port number> D S           - turns the panel off
 aacmd.exe <COM port number> V             - version: x.x.x
-aacmd.exe <COM port number> O S           - opens the FlipFlat
-aacmd.exe <COM port number> C S           - closes the FlipFlat
+aacmd.exe <COM port number> O S           - opens the FlipFlat (does nothing for the Spike-a)
+aacmd.exe <COM port number> C S           - closes the FlipFlat (does nothing for the Spike-a)
 
 <COM Port number> is a dummy argument that is ignored, present for compatibility with Alnitak's AACmd.exe.
 
