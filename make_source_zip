@@ -1,0 +1,17 @@
+#!/bin/bash
+
+V=0.6.1
+
+D=$(cd $(dirname "$0"); /bin/pwd)
+
+rm -rf "$D"/tmp
+mkdir -p "$D"/tmp/alnitak_emu
+cd "$D"
+tar \
+ --exclude='*Release' --exclude='*Debug' --exclude='*.sdf' --exclude='*.suo' --exclude='*.user' \
+ --create --to-stdout \
+ aacmd emu LICENSE.txt README.txt redist usbd usbdctrl \
+ | tar xf - -C "$D"/tmp/alnitak_emu
+cd "$D"/tmp
+rm -f "$D"/alnitak_emu-${V}-src.zip
+zip -r "$D"/alnitak_emu-${V}-src.zip alnitak_emu

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+V=0.6.1
+
+D=$(cd $(dirname "$0"); /bin/pwd)
+
+rm -rf $D/tmp
+mkdir -p $D/tmp
+
+cp \
+	$D/emu/Release/aacmd.exe \
+	$D/emu/Release/alnitak_emu.exe \
+	$D/ChangeLog.txt \
+	$D/redist/com0com-2.2.2.0-x64-fre-signed.zip \
+	$D/redist/hidapi.dll \
+	$D/redist/msvcp120.dll \
+      	$D/redist/msvcr120.dll \
+	$D/LICENSE.txt \
+	$D/README.txt \
+	$D/emu/Release/usbdctrl.exe \
+		$D/tmp/
+
+(
+	cd $D/tmp
+	rm -f $D/alnitak_emu-${V}.zip
+	zip -r $D/alnitak_emu-${V}.zip .
+)

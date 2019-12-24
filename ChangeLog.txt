@@ -1,13 +1,16 @@
 Change Log
 ----------
+Version 0.6.1 - 12/23/2019
+	add msvc runtime redistributable files to zip file
+
 Version 0.6 - 10/29/2015
-    alnitak_emu.exe can run indefinitely, connecting to the USB dimmer on demand
+	alnitak_emu.exe can run indefinitely, connecting to the USB dimmer on demand
 
 Version 0.5 - 7/21/2015
-    non-linear mapping from alnitak to USBD intensities (0..255) => (0..1023) to allow finer control at low intensities
+	non-linear mapping from alnitak to USBD intensities (0..255) => (0..1023) to allow finer control at low intensities
 
 Version 0.4 - 1/14/2015
-    cleanup logging output
+	cleanup logging output
 
 Version 0.3 - 1/13/2015
 	aacmd.exe - make command-line params case-insensitive
